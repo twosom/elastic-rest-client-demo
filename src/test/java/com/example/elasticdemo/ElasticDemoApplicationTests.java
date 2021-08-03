@@ -1,5 +1,6 @@
 package com.example.elasticdemo;
 
+import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.get.GetRequest;
@@ -8,17 +9,18 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
@@ -34,9 +36,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest
 class ElasticDemoApplicationTests {
 
-    @Autowired
     RestHighLevelClient client;
     private final String NEW_INDEX = "new-index";
+
+    @Value("${elastic.host}")
+    private String HOST;
+
+    @Value("${elastic.port}")
+    private int PORT;
 
     /**
      * 이미 해당 인덱스가 존재한다는 가정하에 만들어진 API
@@ -46,6 +53,9 @@ class ElasticDemoApplicationTests {
     @DisplayName("모든 작업을 시작하기 전 인덱스를 조회 후 삭제하고 결과를 출력한다.")
     @BeforeEach
     void beforeEach() throws IOException {
+
+        client = createClient(HOST, PORT);
+
         //== 인덱스 존재 여부 확인 ==//
         GetIndexRequest getIndexRequest = new GetIndexRequest(NEW_INDEX);
         boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
@@ -59,6 +69,19 @@ class ElasticDemoApplicationTests {
         } else {
             System.out.println("new-index 존재하지 않음.");
         }
+    }
+
+    private RestHighLevelClient createClient(String host, int port) {
+        return new RestHighLevelClient(
+                RestClient.builder(
+                        new HttpHost(host, port, "http")
+                )
+        );
+    }
+
+    @AfterEach
+    void afterEach() throws IOException {
+        client.close();
     }
 
     @DisplayName("ElasticSearch 의 cat API 를 이용하여 모든 인덱스 목록을 가져온다.")
