@@ -1,5 +1,6 @@
 package com.example.elasticdemo;
 
+import com.example.elasticdemo.model.ElasticRecruitModel;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -7,6 +8,8 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.MultiSearchRequest;
+import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
@@ -14,12 +17,13 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetIndexResponse;
+import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -30,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
@@ -44,6 +48,9 @@ class ElasticDemoApplicationTests {
 
     @Value("${elastic.port}")
     private int PORT;
+
+    @Autowired
+    ModelMapper mapper;
 
     /**
      * 이미 해당 인덱스가 존재한다는 가정하에 만들어진 API
@@ -151,16 +158,103 @@ class ElasticDemoApplicationTests {
 
         newIndexSearchRequest.source(searchSourceBuilder);
 
-        List<Map<String, Object>> collect = Arrays.stream(client.search(newIndexSearchRequest, RequestOptions.DEFAULT)
+        List<ElasticRecruitModel> collect = Arrays.stream(client.search(newIndexSearchRequest, RequestOptions.DEFAULT)
                         .getInternalResponse()
                         .hits()
                         .getHits())
                 .map(SearchHit::getSourceAsMap)
+                .map(e -> mapper.map(e, ElasticRecruitModel.class))
                 .collect(Collectors.toList());
 
-        for (Map<String, Object> stringObjectMap : collect) {
-            System.out.println(stringObjectMap);
+        for (ElasticRecruitModel elasticRecruitModel : collect) {
+            System.out.println(elasticRecruitModel);
         }
+    }
+
+    //=========================== SARAMIN =============================//
+    @DisplayName("ElasticSearch 에서 모든 구직공고 가져오기")
+    @Test
+    void get_recruit_data() throws IOException {
+        client = createClient(HOST, PORT);
+        //== 생성자 안에 조회할 인덱스 지정 가능(String) 아무것도 안넣고 할 시 모든 INDEX 에서 검색 ==//
+        SearchRequest searchRequest = new SearchRequest();
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        //== 모든 Document 조회 ==//
+        searchSourceBuilder.query(
+                        QueryBuilders.matchAllQuery()
+                )
+                .size(50);
+
+        searchRequest.source(searchSourceBuilder);
+        List<ElasticRecruitModel> modelList = Arrays.stream(client.search(searchRequest, RequestOptions.DEFAULT)
+                        .getInternalResponse()
+                        .hits()
+                        .getHits())
+                .map(SearchHit::getSourceAsMap)
+                .map(e -> mapper.map(e, ElasticRecruitModel.class))
+                .collect(Collectors.toList());
+
+        for (ElasticRecruitModel elasticRecruitModel : modelList) {
+            System.out.println(elasticRecruitModel);
+        }
+    }
+
+
+    @DisplayName("검색어를 통해 ElasticSearch 에서 가져오기")
+    @Test
+    void search_by_keyword() throws IOException {
+        client = createClient(HOST, PORT);
+        SearchRequest searchRequest = new SearchRequest();
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(
+                QueryBuilders.matchQuery("subject", "개발자")
+                        .fuzziness(Fuzziness.AUTO)
+        );
+
+        searchRequest.source(searchSourceBuilder);
+
+        List<ElasticRecruitModel> modelList = Arrays.stream(client.search(searchRequest, RequestOptions.DEFAULT)
+                        .getInternalResponse()
+                        .hits()
+                        .getHits())
+                .map(SearchHit::getSourceAsMap)
+                .map(e -> mapper.map(e, ElasticRecruitModel.class))
+                .collect(Collectors.toList());
+
+        for (ElasticRecruitModel elasticRecruitModel : modelList) {
+            System.out.println(elasticRecruitModel);
+        }
+    }
+
+    @DisplayName("Multi-Search API 사용")
+    @Test
+    void multi_search() throws IOException {
+        //== 맨 처음 다중 검색용 객체를 만든 후, ==//
+        MultiSearchRequest multiSearchRequest = new MultiSearchRequest();
+        //== 검색용 객체에 쿼리를 담는다. ==//
+        SearchRequest firstSearchRequest = new SearchRequest();
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(
+                QueryBuilders.matchQuery("etc", "신입")
+        );
+        firstSearchRequest.source(searchSourceBuilder);
+        //== 그리고 나서 다중 검색용 객체 안에 검색용 객체를 담는다, ==//
+        multiSearchRequest.add(firstSearchRequest);
+
+        //== 이후 반복 ==//
+        SearchRequest secondSearchRequest = new SearchRequest();
+        searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(
+                QueryBuilders.matchQuery("subject", "서울")
+        );
+        secondSearchRequest.source(searchSourceBuilder);
+        multiSearchRequest.add(secondSearchRequest);
+        //== CLIENT 에서 사용 시에는 기존 search 메소드 대신에 msearch 를 사용한다. ==//
+        MultiSearchResponse msearch = client.msearch(multiSearchRequest, RequestOptions.DEFAULT);
+        MultiSearchResponse.Item[] responses = msearch.getResponses();
+        Assertions.assertNotNull(responses);
+
     }
 
 }
