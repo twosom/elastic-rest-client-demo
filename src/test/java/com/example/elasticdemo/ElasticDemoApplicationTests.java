@@ -14,10 +14,11 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.GetIndexResponse;
-import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.client.core.TermVectorsRequest;
+import org.elasticsearch.client.core.TermVectorsResponse;
+import org.elasticsearch.client.indices.*;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -28,10 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
@@ -48,6 +46,8 @@ class ElasticDemoApplicationTests {
 
     @Value("${elastic.port}")
     private int PORT;
+
+    private final static String ANALYZER = "gravylab-nori-analyzer";
 
     @Autowired
     ModelMapper mapper;
@@ -201,32 +201,6 @@ class ElasticDemoApplicationTests {
     }
 
 
-    @DisplayName("검색어를 통해 ElasticSearch 에서 가져오기")
-    @Test
-    void search_by_keyword() throws IOException {
-        client = createClient(HOST, PORT);
-        SearchRequest searchRequest = new SearchRequest();
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(
-                QueryBuilders.matchQuery("subject", "개발자")
-                        .fuzziness(Fuzziness.AUTO)
-        );
-
-        searchRequest.source(searchSourceBuilder);
-
-        List<ElasticRecruitModel> modelList = Arrays.stream(client.search(searchRequest, RequestOptions.DEFAULT)
-                        .getInternalResponse()
-                        .hits()
-                        .getHits())
-                .map(SearchHit::getSourceAsMap)
-                .map(e -> mapper.map(e, ElasticRecruitModel.class))
-                .collect(Collectors.toList());
-
-        for (ElasticRecruitModel elasticRecruitModel : modelList) {
-            System.out.println(elasticRecruitModel);
-        }
-    }
-
     @DisplayName("Multi-Search API 사용")
     @Test
     void multi_search() throws IOException {
@@ -254,7 +228,9 @@ class ElasticDemoApplicationTests {
         MultiSearchResponse msearch = client.msearch(multiSearchRequest, RequestOptions.DEFAULT);
         MultiSearchResponse.Item[] responses = msearch.getResponses();
         Assertions.assertNotNull(responses);
-
     }
+
+
+
 
 }
