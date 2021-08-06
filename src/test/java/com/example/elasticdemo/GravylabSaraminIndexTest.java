@@ -6,6 +6,7 @@ import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateRequest;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
@@ -17,20 +18,13 @@ import org.elasticsearch.client.core.MultiTermVectorsResponse;
 import org.elasticsearch.client.core.TermVectorsRequest;
 import org.elasticsearch.client.core.TermVectorsResponse;
 import org.elasticsearch.client.indices.*;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.analysis.Analysis;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.ReindexRequest;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.modelmapper.ModelMapper;
@@ -52,8 +46,9 @@ public class GravylabSaraminIndexTest {
     public static final String SARAMIN = "saramin";
     public static final String NEW_SARAMIN = "new_saramin";
     public static final String MYTEMPLATE_1 = "mytemplate_1";
+    public static final String STANDARD_ANALYZER = "standard";
+    public static final String CREATED = "CREATED";
     RestHighLevelClient client;
-    private final String NEW_INDEX = "new-index";
 
     @Value("${elastic.host}")
     private String HOST;
@@ -61,7 +56,7 @@ public class GravylabSaraminIndexTest {
     @Value("${elastic.port}")
     private int PORT;
 
-    private final static String ANALYZER = "gravylab-nori-analyzer";
+    private final static String GRAVYLAB_NORI_ANALYZER = "gravylab-nori-analyzer";
 
     @Autowired
     ModelMapper mapper;
@@ -134,26 +129,40 @@ public class GravylabSaraminIndexTest {
     }
 
 
-    @DisplayName("분석 기능 구현")
+    @DisplayName("사용자가 구현한 분석기 사용")
     @ParameterizedTest(name = "{index} 번 텍스트 : {0}")
     @ValueSource(strings = {"안녕하세요. 그레이비랩입니다.", "아버지가 방에 들어가신다.", "아버지 가방에 들어가신다", "[체외진단의료기기 전문기업] 면역진단 마케팅 및 PM (7년 이상)"})
-    void analyse(String text) throws IOException {
+    void analyse_with_custom_analyzer(String text) throws IOException {
         //== 분석 요청을 위한 AnalyzeRequest 생성. withIndexAnalyzer 는 특정 인덱스 지정, withGlobalAnalyzer 는 모든 인덱스에 해당된다.  ==//
-        AnalyzeRequest analyzeRequest = AnalyzeRequest.withIndexAnalyzer("saramin", ANALYZER, text);
+        AnalyzeRequest analyzeRequest = AnalyzeRequest.withIndexAnalyzer(SARAMIN, GRAVYLAB_NORI_ANALYZER, text);
 
         //== client 에 analyzerRequest 를 전달하여 분석을 요청한다. ==//
         AnalyzeResponse response = client.indices().analyze(analyzeRequest, RequestOptions.DEFAULT);
         //== 결과를 받아서 token 을 List 로 추출한다. ==//
-        List<String> tokens = response
-                .getTokens()
-                .stream()
-                .map(AnalyzeResponse.AnalyzeToken::getTerm)
-                .distinct()
-                .collect(Collectors.toList());
+        List<String> tokens = extractTokensFromResponse(response);
 
         System.out.println("tokens = " + tokens);
-
     }
+
+    @DisplayName("Standard 분석기 사용")
+    @Test
+    void analyze_with_standard_analyzer() throws IOException {
+        AnalyzeRequest analyzeRequest = AnalyzeRequest.withIndexAnalyzer(SARAMIN, STANDARD_ANALYZER, "I am a boy");
+        AnalyzeResponse analyzeResponse = client.indices().analyze(analyzeRequest, RequestOptions.DEFAULT);
+        List<String> tokens = extractTokensFromResponse(analyzeResponse);
+        System.out.println("tokens = " + tokens);
+    }
+
+    @DisplayName("Standard Tokenizer 사용")
+    @Test
+    void analyze_with_standard_tokenizer() throws IOException {
+        AnalyzeRequest request = AnalyzeRequest.buildCustomAnalyzer("standard")
+                .build("I am a boy");
+        AnalyzeResponse response = client.indices().analyze(request, RequestOptions.DEFAULT);
+        List<String> tokens = extractTokensFromResponse(response);
+        System.out.println("tokens = " + tokens);
+    }
+
 
     @DisplayName("문서의 특정 field Analyze 결과 보기")
     @Test
@@ -179,7 +188,7 @@ public class GravylabSaraminIndexTest {
                 .map(ElasticRecruitModel::getPositionId)
                 .collect(Collectors.toList());
 
-        TermVectorsRequest termVectorsRequest = new TermVectorsRequest("saramin", "fake_id");
+        TermVectorsRequest termVectorsRequest = new TermVectorsRequest(SARAMIN, "fake_id");
         termVectorsRequest.setFields("etc", "subject", "company");
 
         MultiTermVectorsRequest multiTermVectorsRequest = new MultiTermVectorsRequest(idList.toArray(new String[0]), termVectorsRequest);
@@ -234,7 +243,7 @@ public class GravylabSaraminIndexTest {
 
     @DisplayName("Template API 를 이용한 인덱스 템플릿 생성")
     @Test
-    void analyzer() throws IOException {
+    void create_index_template() throws IOException {
 
         //== 해당 index template 이 이미 있는지 확인 ==//
         GetIndexTemplatesRequest getTemplateRequest = new GetIndexTemplatesRequest(MYTEMPLATE_1);
@@ -271,12 +280,59 @@ public class GravylabSaraminIndexTest {
         AcknowledgedResponse putTemplateResponse = client.indices().putTemplate(request, RequestOptions.DEFAULT);
         System.out.println(MYTEMPLATE_1 + " 템플릿 생성 성공 여부 : " + putTemplateResponse.isAcknowledged());
 
-        CreateIndexRequest createIndexRequest = new CreateIndexRequest("test-1");
-        CreateIndexResponse response = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
-        System.out.println("response = " + response);
+    }
+
+    @DisplayName("테스트용 인덱스 만들기")
+    @Test
+    void create_test_index() throws IOException {
+        GetIndexRequest getIndexRequest = new GetIndexRequest("docs");
+        boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
+        if (exists) {
+            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest("docs");
+            boolean acknowledged = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT)
+                    .isAcknowledged();
+            System.out.println("인덱스 삭제 성공 여부 : " + acknowledged);
+        }
+        CreateIndexRequest createIndexRequest = new CreateIndexRequest("docs");
+        createIndexRequest
+                .mapping("{\n" +
+                                "           \"properties\" : {\n" +
+                                "                   \"title\" : { \"type\" : \"text\" },\n" +
+                                "                   \"content\" : { \"type\" : \"keyword\" }\n" +
+                                "             }\n" +
+                                "}",
+                        XContentType.JSON
+                );
+        CreateIndexResponse createIndexResponse = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+        boolean result = createIndexResponse.isAcknowledged();
+        System.out.println("인덱스 생성 성공 여부 : " + result);
+    }
+
+    @DisplayName("테스트용 인덱스에 문서 입력")
+    @Test
+    void insert_docs_to_test_index() throws IOException {
+        IndexRequest indexRequest = new IndexRequest("docs");
+        Map<String, Object> source = new HashMap<>();
+        source.put("title", "ElasticSearch Training Book");
+        source.put("content", "ElasticSearch is cool open source search engine");
+        indexRequest
+                .source(source);
+
+
+        IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+        System.out.println("indexResponse = " + indexResponse);
+        Assertions.assertEquals(indexResponse.getResult().name(), CREATED);
     }
 
 
+    private List<String> extractTokensFromResponse(AnalyzeResponse response) {
+        return response
+                .getTokens()
+                .stream()
+                .map(AnalyzeResponse.AnalyzeToken::getTerm)
+                .distinct()
+                .collect(Collectors.toList());
+    }
 
 
     private ElasticRecruitModel converSourceMapToModel(Map<String, Object> e) {
