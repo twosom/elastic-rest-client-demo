@@ -2,8 +2,13 @@ package com.example.elasticdemo;
 
 import com.example.elasticdemo.model.ElasticRecruitModel;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.admin.indices.alias.Alias;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateRequest;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -11,9 +16,15 @@ import org.elasticsearch.client.core.MultiTermVectorsRequest;
 import org.elasticsearch.client.core.MultiTermVectorsResponse;
 import org.elasticsearch.client.core.TermVectorsRequest;
 import org.elasticsearch.client.core.TermVectorsResponse;
-import org.elasticsearch.client.indices.AnalyzeRequest;
-import org.elasticsearch.client.indices.AnalyzeResponse;
+import org.elasticsearch.client.indices.*;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.analysis.Analysis;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.ReindexRequest;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.AfterEach;
@@ -28,10 +39,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
@@ -41,6 +49,9 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 @SpringBootTest
 public class GravylabSaraminIndexTest {
 
+    public static final String SARAMIN = "saramin";
+    public static final String NEW_SARAMIN = "new_saramin";
+    public static final String MYTEMPLATE_1 = "mytemplate_1";
     RestHighLevelClient client;
     private final String NEW_INDEX = "new-index";
 
@@ -151,6 +162,7 @@ public class GravylabSaraminIndexTest {
 
         //== 검색을 위한 SearchRequest 생성 ==//
         //TODO 자동 완성 검색어 목록을 어떻게 추려낼 지
+        long start = new Date().getTime();
         SearchRequest searchRequest = new SearchRequest();
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(
@@ -188,11 +200,83 @@ public class GravylabSaraminIndexTest {
                 .filter(e -> e.length() > 1)
                 .filter(e -> !e.matches("[+-]?\\d*(\\.\\d+)?"))
                 .collect(Collectors.toList());
+        long end = new Date().getTime();
+        System.out.println(end - start);
 
         for (String token : tokenList) {
             System.out.println(token);
         }
     }
+
+    @DisplayName("Reindex API 사용")
+    @Test
+    void re_index() throws IOException {
+
+        //== 인덱스 존재 여부 확인 ==//
+        GetIndexRequest getIndexRequest = new GetIndexRequest(NEW_SARAMIN);
+        boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
+        //== 인덱스가 존재하면 삭제 ==//
+        if (exists) {
+            System.out.println("새로운 인덱스가 이미 존재합니다.");
+            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(NEW_SARAMIN);
+            boolean result = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT)
+                    .isAcknowledged();
+            System.out.println("새로운 인덱스 삭제 결과 : " + result);
+        }
+
+        //== 기존의 saramin 인덱스를 new_saramin 이라는 인덱스로 복사 요청 ==//
+        ReindexRequest reindexRequest = new ReindexRequest();
+        reindexRequest.setSourceIndices(SARAMIN)
+                .setDestIndex(NEW_SARAMIN);
+        BulkByScrollResponse response = client.reindex(reindexRequest, RequestOptions.DEFAULT);
+        System.out.println(response.getCreated() + "개의 데이터가 추가됨.");
+    }
+
+    @DisplayName("Template API 를 이용한 인덱스 템플릿 생성")
+    @Test
+    void analyzer() throws IOException {
+
+        //== 해당 index template 이 이미 있는지 확인 ==//
+        GetIndexTemplatesRequest getTemplateRequest = new GetIndexTemplatesRequest(MYTEMPLATE_1);
+        GetIndexTemplatesResponse getTemplateResponse = client.indices().getIndexTemplate(getTemplateRequest, RequestOptions.DEFAULT);
+        //== 이미 존재하는 인덱스 템플릿이라면 ==//
+        if (!getTemplateResponse.getIndexTemplates().isEmpty()) {
+            //== 해당 인덱스 템플릿 삭제 요청 ==//
+            System.out.println(MYTEMPLATE_1 + " 템플릿 이미 존재");
+            DeleteIndexTemplateRequest deleteTemplateRequest = new DeleteIndexTemplateRequest(MYTEMPLATE_1);
+            AcknowledgedResponse deleteTemplateResponse = client.indices().deleteTemplate(deleteTemplateRequest, RequestOptions.DEFAULT);
+            boolean result = deleteTemplateResponse.isAcknowledged();
+            System.out.println(MYTEMPLATE_1 + " 템플릿 삭제 성공 여부 : " + result);
+        }
+
+        PutIndexTemplateRequest request = new PutIndexTemplateRequest("mytemplate_1");
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("number_of_shards", 3);
+        settings.put("number_of_replicas", 1);
+
+
+        request.patterns(List.of("test*"))
+                .order(1)
+                .settings(settings)
+                .mapping("{\n" +
+                        "    \"properties\" : {\n" +
+                        "           \"test\": {\n" +
+                        "               \"type\" : \"text\" \n" +
+                        "           }\n" +
+                        "       }\n" +
+                        "}", XContentType.JSON)
+                .alias(new Alias("alias1"));
+
+
+        AcknowledgedResponse putTemplateResponse = client.indices().putTemplate(request, RequestOptions.DEFAULT);
+        System.out.println(MYTEMPLATE_1 + " 템플릿 생성 성공 여부 : " + putTemplateResponse.isAcknowledged());
+
+        CreateIndexRequest createIndexRequest = new CreateIndexRequest("test-1");
+        CreateIndexResponse response = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+        System.out.println("response = " + response);
+    }
+
+
 
 
     private ElasticRecruitModel converSourceMapToModel(Map<String, Object> e) {
