@@ -1,37 +1,58 @@
 package com.example.elasticdemo;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponseSections;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.ReindexRequest;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
+import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termQuery;
 
 @ActiveProfiles("home")
 @SpringBootTest
 public class ElasticSearchGuidBookTest {
 
+    public static final String CCTV_DATA = "cctv-data";
+    public static final String NEW_CCTV_DATA = "new-cctv-data";
+    public static final String TEST_DATA = "test_data";
     @Value("${elastic.host}")
     private String HOST;
 
@@ -39,6 +60,8 @@ public class ElasticSearchGuidBookTest {
     private int PORT;
 
     RestHighLevelClient client;
+
+    private static AtomicLong id = new AtomicLong(1);
 
 
     @BeforeEach
@@ -64,84 +87,346 @@ public class ElasticSearchGuidBookTest {
         );
     }
 
-
-    @DisplayName("search API 학습을 위한 데이터 Bulk API")
+    @DisplayName("검색 학습을 위한 BulkAPI 사용1")
     @Test
-    void bulk_api_for_search_api() throws Exception {
+    void create_index_using_bulk_index_api1() throws Exception {
+        removeIndexIfExists(CCTV_DATA);
+        createCctvIndex();
+        List<Map<String, Object>> records = getObjectFromResourceFile();
+        BulkRequest bulkRequest = new BulkRequest();
 
-        GetIndexRequest getIndexRequest = new GetIndexRequest("test_data");
-        boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
-        if (exists) {
-            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest("test_data");
-            boolean result = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT).isAcknowledged();
-            assertTrue(result);
+
+        int i = 0;
+        for (Map<String, Object> record : records) {
+            IndexRequest indexRequest = new IndexRequest(CCTV_DATA);
+            indexRequest.id(String.valueOf(id.getAndAdd(1)))
+                    .source(record);
+            bulkRequest.add(indexRequest);
+            i++;
+            if (i > 10000) {
+                i = 0;
+                client.bulk(bulkRequest, RequestOptions.DEFAULT);
+                bulkRequest = new BulkRequest();
+            }
         }
 
-        BulkRequest bulkRequest = new BulkRequest();
-        addSampleDataToBulkRequest(bulkRequest);
-        BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        id.set(1);
     }
 
-    @DisplayName("간단한 Search API 사용")
+
+    @DisplayName("geo_point 사용을 위한 재인덱싱")
     @Test
-    void simple_search_api() throws Exception {
-        GetIndexRequest getIndexRequest = new GetIndexRequest("test_data");
-        boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
-        if (!exists) {
-            bulk_api_for_search_api();
+    void reindex_for_geo_point() throws Exception {
+        removeIndexIfExists(NEW_CCTV_DATA);
+        // TODO 만약 인덱스가 없으면 생성
+        if (!isExistIndex(CCTV_DATA)) create_index_using_bulk_index_api1();
+
+        CreateIndexRequest createIndexRequest = new CreateIndexRequest(NEW_CCTV_DATA);
+
+
+        //TODO 기존의 longitude, latitude 에서 geo_point 를 사용허기 위한 사전 Mapping 작업
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+        mappingLocationForReindex(builder);
+        createIndexRequest.mapping(builder);
+        boolean isCreated = client.indices().create(createIndexRequest, RequestOptions.DEFAULT).isAcknowledged();
+        Assertions.assertTrue(isCreated);
+
+
+        ReindexRequest reindexRequest = new ReindexRequest();
+        Script script = new Script(ScriptType.INLINE, "painless",
+                "ctx._source.location = ['lat' : ctx._source.latitude, 'lon' : ctx._source.longitude];" +
+                        "ctx._source.remove('longitude');" +
+                        "ctx._source.remove('latitude');", new HashMap<>());
+
+        reindexRequest.setSourceIndices(CCTV_DATA)
+                .setDestIndex(NEW_CCTV_DATA)
+                .setScript(script);
+
+        BulkByScrollResponse reindexResponse = client.reindex(reindexRequest, RequestOptions.DEFAULT);
+        System.out.println("reindexResponse = " + reindexResponse);
+    }
+
+
+    @DisplayName("검색 학습을 위한 BulkAPI 사용2")
+    @Test
+    void create_index_using_bulk_api2() throws Exception {
+
+        removeIndexIfExists(TEST_DATA);
+
+
+        InputStream inputStream = new ClassPathResource("sample09-1.json").getInputStream();
+        List<Map<String, Object>> sampleDataList = new ObjectMapper().readValue(inputStream, new TypeReference<List<Map<String, Object>>>() {
+        });
+
+        BulkRequest bulkRequest = new BulkRequest();
+        for (Map<String, Object> source : sampleDataList) {
+            IndexRequest indexRequest = new IndexRequest(TEST_DATA)
+                    .id(String.valueOf(id.getAndAdd(1)))
+                    .source(source);
+
+            bulkRequest.add(indexRequest);
         }
 
-        SearchRequest searchRequest = new SearchRequest("test_data");
+        BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        Assertions.assertTrue(Arrays.stream(bulkResponse.getItems()).findAny().isPresent());
+
+    }
+
+
+    @DisplayName("from/size 를 이용한 검색")
+    @Test
+    void search_with_from_size() throws Exception {
+        if (isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+
+        SearchRequest searchRequest = new SearchRequest(TEST_DATA);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(
-                QueryBuilders.termQuery("title", "elasticsearch")
-        );
+                        termQuery("publisher", "media")
+                )
+                .from(0)
+                .size(3);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult = extractResultList(searchResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+    }
+
+
+    @DisplayName("sort 옵션을 활용한 검색")
+    @Test
+    void search_with_sort() throws Exception {
+        if (!isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+        SearchRequest searchRequest = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        searchSourceBuilder.query(
+                        termQuery("title", "nginx")
+                )
+                //TODO sort 옵션은 text 필드가 아닌 keyword 나 integer 와 같이 not analyzed 가 기본인 필드를 기준으로 해야 한다.
+                .sort("ISBN.keyword", SortOrder.DESC);
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult = extractResultList(searchResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+    }
+
+
+    @DisplayName("source 옵션을 활용한 검색")
+    @Test
+    void search_with_source() throws Exception {
+        if (!isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+        SearchRequest searchRequest = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(
+                        termQuery("title", "nginx")
+                )
+                .fetchSource(new String[]{"title", "description"}, new String[]{"publisher", "ISBN", "release_date"});
 
         searchRequest.source(searchSourceBuilder);
-        SearchResponseSections internalResponse = client.search(searchRequest, RequestOptions.DEFAULT)
-                .getInternalResponse();
 
-        List<Map<String, Object>> result = Arrays.stream(internalResponse
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult = extractResultList(searchResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+    }
+
+    @DisplayName("highlighting 옵션을 활용한 검색")
+    @Test
+    void search_with_highlighting() throws Exception {
+        if (!isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+        SearchRequest searchRequest = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        //TODO 검색 결과 중에 어떤 부분이 쿼리문과 일치하여 검색되었는지 궁금할 경우 사용.
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        HighlightBuilder.Field highlightTitle =
+                new HighlightBuilder.Field("title");
+        highlightBuilder.field(highlightTitle);
+
+
+
+        searchSourceBuilder.query(
+                termQuery("title", "nginx")
+        ).highlighter(highlightBuilder);
+
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult = extractResultList(searchResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+
+    }
+
+    @DisplayName("boost 옵션을 활용한 검색")
+    @Test
+    void search_with_boost() throws Exception {
+        if (!isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+        SearchRequest searchRequest1 = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder1 = new SearchSourceBuilder();
+        searchSourceBuilder1.query(
+                matchQuery("title", "nginx")
+                        .boost(4)
+        );
+
+        searchRequest1.source(searchSourceBuilder1);
+
+        SearchResponse searchResponse1 = client.search(searchRequest1, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult1 = extractResultList(searchResponse1);
+        for (Map<String, Object> result : searchResult1) {
+            System.out.println(result);
+        }
+
+
+        SearchRequest searchRequest2 = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder2 = new SearchSourceBuilder();
+        searchSourceBuilder2.query(
+                termQuery("title", "nginx")
+                        .boost(4)
+        );
+
+
+        searchRequest2.source(searchSourceBuilder2);
+        SearchResponse searchResponse2 = client.search(searchRequest2, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult2 = extractResultList(searchResponse2);
+        for (Map<String, Object> result : searchResult2) {
+            System.out.println(result);
+        }
+    }
+
+
+    @DisplayName("scroll api를 통한 예제")
+    @Test
+    void search_with_scroll() throws Exception {
+        if (!isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+        SearchRequest searchRequest = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(
+                matchQuery("title", "nginx")
+        ).size(1);
+
+        searchRequest.source(searchSourceBuilder);
+        searchRequest.scroll(TimeValue.timeValueMinutes(1));
+
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        String scrollId = searchResponse.getScrollId();
+        System.out.println("scrollID : " + scrollId);
+        List<Map<String, Object>> searchResult = extractResultList(searchResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+
+
+        //== 위에서 발급받은 scrollId 로 페이징 처리 ==//
+        SearchScrollRequest searchScrollRequest = new SearchScrollRequest(scrollId);
+        searchScrollRequest.scroll(TimeValue.timeValueMinutes(1));
+
+        SearchResponse scrollResponse = client.scroll(searchScrollRequest, RequestOptions.DEFAULT);
+        scrollId = scrollResponse.getScrollId();
+        System.out.println("scrollId : " + scrollId);
+        searchResult = extractResultList(scrollResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+    }
+
+    private List<Map<String, Object>> extractResultList(SearchResponse searchResponse) {
+        return Arrays.stream(searchResponse.getInternalResponse()
                         .hits()
                         .getHits())
                 .map(SearchHit::getSourceAsMap)
                 .collect(Collectors.toList());
+    }
 
-        assertFalse(result.isEmpty());
-        for (Map<String, Object> stringObjectMap : result) {
-            System.out.println(stringObjectMap);
+
+    private void mappingLocationForReindex(XContentBuilder builder) throws IOException {
+        builder.startObject();
+        {
+            builder.startObject("properties");
+            {
+                builder.startObject("location");
+                {
+                    builder.field("type", "geo_point");
+                }
+                builder.endObject();
+            }
+            builder.endObject();
+        }
+        builder.endObject();
+    }
+
+
+    private void createCctvIndex() throws IOException {
+        CreateIndexRequest createIndexRequest = new CreateIndexRequest(CCTV_DATA);
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+        //TODO 사전 MAPPING 작업
+        builder.startObject();
+        {
+            builder.startObject("properties");
+            {
+                builder.startObject("longitude");
+                {
+                    builder.field("type", "double");
+                }
+                builder.endObject();
+                builder.startObject("latitude");
+                {
+                    builder.field("type", "double");
+                }
+                builder.endObject();
+                builder.startObject("카메라대수");
+                {
+                    builder.field("type", "long");
+                }
+                builder.endObject();
+                builder.startObject("카메라화소수");
+                {
+                    builder.field("type", "double");
+                }
+                builder.endObject();
+            }
+            builder.endObject();
+        }
+        builder.endObject();
+        createIndexRequest.mapping(builder);
+        boolean isCreated = client.indices().create(createIndexRequest, RequestOptions.DEFAULT).isAcknowledged();
+        Assertions.assertTrue(isCreated);
+        System.out.println(CCTV_DATA + " 인덱스가 생성되었습니다.");
+    }
+
+    private List<Map<String, Object>> getObjectFromResourceFile() throws IOException {
+        InputStream inputStream = new ClassPathResource("cctv-data.json").getInputStream();
+        return new ObjectMapper().readValue(inputStream, new TypeReference<List<Map<String, Object>>>() {
+                }).stream()
+                .filter(e -> StringUtils.hasText(String.valueOf(e.get("longitude"))))
+                .filter(e -> StringUtils.hasText(String.valueOf(e.get("latitude"))))
+                .collect(Collectors.toList());
+    }
+
+
+    private void removeIndexIfExists(String indexName) throws IOException {
+        boolean exists = isExistIndex(indexName);
+        if (exists) {
+            System.out.println(indexName + " 인덱스가 이미 존재합니다.");
+            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indexName);
+            boolean acknowledged = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT).isAcknowledged();
+            Assertions.assertTrue(acknowledged);
+            System.out.println(indexName + " 인덱스가 삭제되었습니다.");
         }
     }
 
-
-
-
-
-
-
-    private void addSampleDataToBulkRequest(BulkRequest bulkRequest) {
-        bulkRequest.add(addData("{ \"title\": \"ElasticSearch Training Book\", \"publisher\": \"insight\", \"ISBN\": \"9788966264849\", \"release_date\": \"2020/09/30\", \"description\": \"ElasticSearch is cool open source search engine\" }\n", "1"));
-        bulkRequest.add(addData("{ \"title\" : \"Kubernetes: Up and Running\", \"publisher\": \"O'Reilly Media, Inc.\", \"ISBN\": \"9781491935675\", \"release_date\": \"2017/09/03\", \"description\" : \"What separates the traditional enterprise from the likes of Amazon, Netflix, and Etsy? Those companies have refined the art of cloud native development to maintain their competitive edge and stay well ahead of the competition. This practical guide shows Java/JVM developers how to build better software, faster, using Spring Boot, Spring Cloud, and Cloud Foundry.\" }\n", "2"));
-        bulkRequest.add(addData("{ \"title\" : \"Cloud Native Java\", \"publisher\": \"O'Reilly Media, Inc.\", \"ISBN\": \"9781449374648\", \"release_date\": \"2017/08/04\", \"description\" : \"What separates the traditional enterprise from the likes of Amazon, Netflix, and Etsy? Those companies have refined the art of cloud native development to maintain their competitive edge and stay well ahead of the competition. This practical guide shows Java/JVM developers how to build better software, faster, using Spring Boot, Spring Cloud, and Cloud Foundry.\" }\n", "3"));
-        bulkRequest.add(addData("{ \"title\" : \"Learning Chef\", \"publisher\": \"O'Reilly Media, Inc.\", \"ISBN\": \"9781491944936\", \"release_date\": \"2014/11/08\", \"description\" : \"Get a hands-on introduction to the Chef, the configuration management tool for solving operations issues in enterprises large and small. Ideal for developers and sysadmins new to configuration management, this guide shows you to automate the packaging and delivery of applications in your infrastructure. You’ll be able to build (or rebuild) your infrastructure’s application stack in minutes or hours, rather than days or weeks.\" }\n", "4"));
-        bulkRequest.add(addData("{ \"title\" : \"Elasticsearch Indexing\", \"publisher\": \"Packt Publishing\", \"ISBN\": \"9781783987023\", \"release_date\": \"2015/12/22\", \"description\" : \"Improve search experiences with ElasticSearch’s powerful indexing functionality – learn how with this practical ElasticSearch tutorial, packed with tips!\" }\n", "5"));
-        bulkRequest.add(addData("{ \"title\" : \"Hadoop: The Definitive Guide, 4th Edition\", \"publisher\": \"O'Reilly Media, Inc.\", \"ISBN\": \"9781491901632\", \"release_date\": \"2015/04/14\", \"description\" : \"Get ready to unlock the power of your data. With the fourth edition of this comprehensive guide, you’ll learn how to build and maintain reliable, scalable, distributed systems with Apache Hadoop. This book is ideal for programmers looking to analyze datasets of any size, and for administrators who want to set up and run Hadoop clusters.\" }\n", "6"));
-        bulkRequest.add(addData("{ \"title\": \"Getting Started with Impala\", \"publisher\": \"O'Reilly Media, Inc.\", \"ISBN\": \"9781491905777\", \"release_date\": \"2014/09/14\", \"description\" : \"Learn how to write, tune, and port SQL queries and other statements for a Big Data environment, using Impala—the massively parallel processing SQL query engine for Apache Hadoop. The best practices in this practical guide help you design database schemas that not only interoperate with other Hadoop components, and are convenient for administers to manage and monitor, but also accommodate future expansion in data size and evolution of software capabilities. Ideal for database developers and business analysts, the latest revision covers analytics functions, complex types, incremental statistics, subqueries, and submission to the Apache incubator.\" }\n", "7"));
-        bulkRequest.add(addData("{ \"title\": \"NGINX High Performance\", \"publisher\": \"Packt Publishing\", \"ISBN\": \"9781785281839\", \"release_date\": \"2015/07/29\", \"description\": \"Optimize NGINX for high-performance, scalable web applications\" }\n", "8"));
-        bulkRequest.add(addData("{ \"title\": \"Mastering NGINX - Second Edition\", \"publisher\": \"Packt Publishing\", \"ISBN\": \"9781782173311\", \"release_date\": \"2016/07/28\", \"description\": \"An in-depth guide to configuring NGINX for your everyday server needs\" }\n", "9"));
-        bulkRequest.add(addData("{ \"title\" : \"Linux Kernel Development, Third Edition\", \"publisher\": \"Addison-Wesley Professional\", \"ISBN\": \"9780672329463\", \"release_date\": \"2010/06/09\", \"description\" : \"Linux Kernel Development details the design and implementation of the Linux kernel, presenting the content in a manner that is beneficial to those writing and developing kernel code, as well as to programmers seeking to better understand the operating system and become more efficient and productive in their coding.\" }\n", "10"));
-        bulkRequest.add(addData("{ \"title\" : \"Linux Kernel Development, Second Edition\", \"publisher\": \"Sams\", \"ISBN\": \"9780672327209\", \"release_date\": \"2005/01/01\", \"description\" : \"The Linux kernel is one of the most important and far-reaching open-source projects. That is why Novell Press is excited to bring you the second edition of Linux Kernel Development, Robert Love's widely acclaimed insider's look at the Linux kernel. This authoritative, practical guide helps developers better understand the Linux kernel through updated coverage of all the major subsystems as well as new features associated with the Linux 2.6 kernel. You'll be able to take an in-depth look at Linux kernel from both a theoretical and an applied perspective as you cover a wide range of topics, including algorithms, system call interface, paging strategies and kernel synchronization. Get the top information right from the source in Linux Kernel Development.\" }", "11"));
-    }
-
-    private IndexRequest addData(String s, String id) {
-        return createIndexRequestForBulkRequest(id)
-                .source(s,
-                        XContentType.JSON);
-    }
-
-    private IndexRequest createIndexRequestForBulkRequest(String id) {
-        return new IndexRequest("test_data")
-                .id(id);
+    private boolean isExistIndex(String indexName) throws IOException {
+        GetIndexRequest getIndexRequest = new GetIndexRequest(indexName);
+        boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
+        return exists;
     }
 
 
