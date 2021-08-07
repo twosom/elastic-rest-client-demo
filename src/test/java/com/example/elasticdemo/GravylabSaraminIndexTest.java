@@ -85,6 +85,35 @@ public class GravylabSaraminIndexTest {
         client.close();
     }
 
+    //=========================== SARAMIN =============================//
+    @DisplayName("ElasticSearch 에서 모든 구직공고 가져오기")
+    @Test
+    void get_recruit_data() throws IOException {
+        client = createClient(HOST, PORT);
+        //== 생성자 안에 조회할 인덱스 지정 가능(String) 아무것도 안넣고 할 시 모든 INDEX 에서 검색 ==//
+        SearchRequest searchRequest = new SearchRequest();
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        //== 모든 Document 조회 ==//
+        searchSourceBuilder.query(
+                        QueryBuilders.matchAllQuery()
+                )
+                .size(50);
+
+        searchRequest.source(searchSourceBuilder);
+        List<ElasticRecruitModel> modelList = Arrays.stream(client.search(searchRequest, RequestOptions.DEFAULT)
+                        .getInternalResponse()
+                        .hits()
+                        .getHits())
+                .map(SearchHit::getSourceAsMap)
+                .map(e -> mapper.map(e, ElasticRecruitModel.class))
+                .collect(Collectors.toList());
+
+        for (ElasticRecruitModel elasticRecruitModel : modelList) {
+            System.out.println(elasticRecruitModel);
+        }
+    }
+
 
     @DisplayName("검색어를 통해 ElasticSearch 에서 가져오기")
     @ParameterizedTest(name = "{index} 번 검색어 : {0}")

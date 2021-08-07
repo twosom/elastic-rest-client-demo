@@ -3,6 +3,7 @@ package com.example.elasticdemo;
 import com.example.elasticdemo.model.ElasticRecruitModel;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.admin.indices.alias.Alias;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -11,13 +12,17 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.MultiSearchResponse;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.GetIndexResponse;
+import org.elasticsearch.client.indices.*;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.ReindexRequest;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.junit.jupiter.api.*;
@@ -25,6 +30,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -36,9 +42,11 @@ import java.util.stream.Collectors;
 import static org.elasticsearch.index.query.QueryBuilders.matchAllQuery;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@ActiveProfiles("home")
 @SpringBootTest
 class ElasticDemoApplicationTests {
 
+    public static final String PETITIONS = "petitions";
     RestHighLevelClient client;
     private final String NEW_INDEX = "new-index";
 
@@ -48,7 +56,8 @@ class ElasticDemoApplicationTests {
     @Value("${elastic.port}")
     private int PORT;
 
-    private final static String ANALYZER = "gravylab-nori-analyzer";
+    String 전국cctv표준데이터3 = "전국cctv표준데이터3";
+
 
     @Autowired
     ModelMapper mapper;
@@ -61,7 +70,6 @@ class ElasticDemoApplicationTests {
     @DisplayName("모든 작업을 시작하기 전 인덱스를 조회 후 삭제하고 결과를 출력한다.")
     @BeforeEach
     void beforeEach() throws IOException {
-
         client = createClient(HOST, PORT);
 
         //== 인덱스 존재 여부 확인 ==//
@@ -172,35 +180,6 @@ class ElasticDemoApplicationTests {
         }
     }
 
-    //=========================== SARAMIN =============================//
-    @DisplayName("ElasticSearch 에서 모든 구직공고 가져오기")
-    @Test
-    void get_recruit_data() throws IOException {
-        client = createClient(HOST, PORT);
-        //== 생성자 안에 조회할 인덱스 지정 가능(String) 아무것도 안넣고 할 시 모든 INDEX 에서 검색 ==//
-        SearchRequest searchRequest = new SearchRequest();
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-
-        //== 모든 Document 조회 ==//
-        searchSourceBuilder.query(
-                        QueryBuilders.matchAllQuery()
-                )
-                .size(50);
-
-        searchRequest.source(searchSourceBuilder);
-        List<ElasticRecruitModel> modelList = Arrays.stream(client.search(searchRequest, RequestOptions.DEFAULT)
-                        .getInternalResponse()
-                        .hits()
-                        .getHits())
-                .map(SearchHit::getSourceAsMap)
-                .map(e -> mapper.map(e, ElasticRecruitModel.class))
-                .collect(Collectors.toList());
-
-        for (ElasticRecruitModel elasticRecruitModel : modelList) {
-            System.out.println(elasticRecruitModel);
-        }
-    }
-
 
     @DisplayName("Multi-Search API 사용")
     @Test
@@ -231,7 +210,103 @@ class ElasticDemoApplicationTests {
         Assertions.assertNotNull(responses);
     }
 
+    @DisplayName("Template API 를 이용한 인덱스 템플릿 생성")
+    @Test
+    void create_index_template() throws IOException {
 
+//        //== 해당 index template 이 이미 있는지 확인 ==//
+//        GetIndexTemplatesRequest getTemplateRequest = new GetIndexTemplatesRequest(PETITIONS);
+//        GetIndexTemplatesResponse getTemplateResponse = client.indices().getIndexTemplate(getTemplateRequest, RequestOptions.DEFAULT);
+//        //== 이미 존재하는 인덱스 템플릿이라면 ==//
+//        if (!getTemplateResponse.getIndexTemplates().isEmpty()) {
+//            //== 해당 인덱스 템플릿 삭제 요청 ==//
+//            System.out.println(PETITIONS + " 템플릿 이미 존재");
+//            DeleteIndexTemplateRequest deleteTemplateRequest = new DeleteIndexTemplateRequest(PETITIONS);
+//            AcknowledgedResponse deleteTemplateResponse = client.indices().deleteTemplate(deleteTemplateRequest, RequestOptions.DEFAULT);
+//            boolean result = deleteTemplateResponse.isAcknowledged();
+//            System.out.println(PETITIONS + " 템플릿 삭제 성공 여부 : " + result);
+//        }
+
+        PutIndexTemplateRequest request = new PutIndexTemplateRequest(PETITIONS);
+
+        String source = "{\n" +
+                "           \"properties\" : {\n" +
+                "               \"content\" : {\n" +
+                "                   \"type\" : \"text\", \n" +
+                "                   \"fields\" : {\n" +
+                "                       \"nori\" : {\n" +
+                "                           \"type\" : \"text\", " +
+                "                           \"analyzer\" : \"nori\" \n" +
+                "                        }\n" +
+                "                    }\n" +
+                "               }\n" +
+                "           }\n" +
+                "       }\n";
+        System.out.println("source = " + source);
+        request.patterns(List.of("petitions_*"))
+                .mapping(source, XContentType.JSON)
+                .alias(new Alias("petitions"));
+
+
+        AcknowledgedResponse putTemplateResponse = client.indices().putTemplate(request, RequestOptions.DEFAULT);
+        System.out.println(PETITIONS + " 템플릿 생성 성공 여부 : " + putTemplateResponse.isAcknowledged());
+
+    }
+
+
+    @DisplayName("CCTV 데이터 Reindexing")
+    @Test
+    void reindex_api() throws Exception {
+        // TODO 전국cctv표준데이터3 라는 인덱스가 있는지 검색
+        GetIndexRequest getIndexRequest = new GetIndexRequest(전국cctv표준데이터3);
+        boolean exists = client.indices().exists(getIndexRequest, RequestOptions.DEFAULT);
+        //TODO 있으면 삭제
+        if (exists) {
+            DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(전국cctv표준데이터3);
+            boolean isDeleted = client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT).isAcknowledged();
+            System.out.println(전국cctv표준데이터3 + " 인덱스 삭제 성공 여부 : " + isDeleted);
+        }
+
+        //TODO 새로운 인덱스 생성
+        CreateIndexRequest createIndexRequest = new CreateIndexRequest(전국cctv표준데이터3);
+        boolean isCreated = client.indices().create(createIndexRequest, RequestOptions.DEFAULT).isAcknowledged();
+        System.out.println(전국cctv표준데이터3 + " 인덱스 생성 성공 여부 : " + isCreated);
+
+
+        //TODO 생성 후 mapping api 를 통해 매핑
+        if (isCreated) {
+            PutMappingRequest putMappingRequest = new PutMappingRequest(전국cctv표준데이터3);
+            putMappingRequest
+                    .source(
+                            "{\n" +
+                                    "   \"properties\" : {\n" +
+                                    "   \"location\" : {\n" +
+                                    "       \"type\" : \"geo_point\"\n" +
+                                    "   }\n" +
+                                    "}\n" +
+                                    "}", XContentType.JSON);
+            boolean result = client.indices().putMapping(putMappingRequest, RequestOptions.DEFAULT).isAcknowledged();
+            System.out.println(전국cctv표준데이터3 + " mapping 결과 : " + result);
+
+            if (result) {
+                ReindexRequest reindexRequest = new ReindexRequest();
+                Script script = new Script(ScriptType.INLINE, "painless",
+                        "ctx._source.location = ['lat' : ctx._source.latitude, 'lon' : ctx._source.longitude];", new HashMap<>());
+
+
+                reindexRequest.setSourceIndices("전국cctv표준데이터")
+                        .setDestIndex(전국cctv표준데이터3)
+                        .setScript(script);
+
+                BulkByScrollResponse reindexResponse = client.reindex(reindexRequest, RequestOptions.DEFAULT);
+                System.out.println("reindexResponse = " + reindexResponse);
+
+            }
+
+
+        }
+
+    }
 
 
 }
