@@ -3,6 +3,7 @@ package com.example.elasticdemo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -22,7 +23,6 @@ import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.ReindexRequest;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -103,14 +103,22 @@ public class ElasticSearchGuidBookTest {
                     .source(record);
             bulkRequest.add(indexRequest);
             i++;
-            if (i > 10000) {
+            if (i >= 10000) {
                 i = 0;
-                client.bulk(bulkRequest, RequestOptions.DEFAULT);
+                long count = Arrays.stream(client.bulk(bulkRequest, RequestOptions.DEFAULT)
+                                .getItems())
+                        .filter(e -> e.getOpType().equals(DocWriteRequest.OpType.INDEX))
+                        .count();
+                System.out.println(count + " 개의 문서가 인덱싱 되었습니다.");
                 bulkRequest = new BulkRequest();
             }
         }
 
-        client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        long count = Arrays.stream(client.bulk(bulkRequest, RequestOptions.DEFAULT)
+                        .getItems())
+                .filter(e -> e.getOpType().equals(DocWriteRequest.OpType.INDEX))
+                .count();
+        System.out.println(count + " 개의 문서가 인덱싱 되었습니다.");
         id.set(1);
     }
 
@@ -333,6 +341,29 @@ public class ElasticSearchGuidBookTest {
         scrollId = scrollResponse.getScrollId();
         System.out.println("scrollId : " + scrollId);
         searchResult = extractResultList(scrollResponse);
+        for (Map<String, Object> result : searchResult) {
+            System.out.println(result);
+        }
+    }
+
+
+    @DisplayName("match 쿼리 사용")
+    @Test
+    void search_with_match_query() throws Exception {
+        if (!isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
+        SearchRequest searchRequest = new SearchRequest(TEST_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        // TODO /match 쿼리는 queryContext 중에서도 가장 많이 사용되는 쿼리.
+        // TODO /검색어로 들어온 문자열을 analyzer 를 통해 분석한 후 inverted index 에서 해당 문자열의 토큰을 가지고 있는 문서를 검색.
+        // TODO /문서의 해당 필드에 설정해 놓은 analyzer 를 기본으로 사용하며, 별도의 analyzer 를 사용할 때는 직접 명시해 주면 된다.
+        searchSourceBuilder.query(
+                matchQuery("description", "nginx guide")
+        );
+
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        List<Map<String, Object>> searchResult = extractResultList(searchResponse);
         for (Map<String, Object> result : searchResult) {
             System.out.println(result);
         }
