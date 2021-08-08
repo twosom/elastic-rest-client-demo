@@ -16,10 +16,15 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.common.geo.ShapeRelation;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.geometry.Rectangle;
+import org.elasticsearch.index.rankeval.EvaluationMetric;
+import org.elasticsearch.index.rankeval.PrecisionAtK;
+import org.elasticsearch.index.rankeval.RatedDocument;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.ReindexRequest;
 import org.elasticsearch.script.Script;
@@ -37,10 +42,7 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -873,7 +875,7 @@ public class ElasticSearchGuidBookTest {
 
     @DisplayName("geo distance 를 이용한 검색")
     @Test
-    void search_with_geo_distance_api() throws Exception {
+    void search_with_geo_distance_api1() throws Exception {
         //TODO 실제 검색을 위해 13 만건 정도 되는 CCTV 데이터 사용(Analyzer 적용 완료)
         if (!isExistIndex(NEW_CCTV_DATA)) reindex_for_geo_point();
         SearchRequest searchRequest = new SearchRequest(NEW_CCTV_DATA);
@@ -910,10 +912,37 @@ public class ElasticSearchGuidBookTest {
         for (SearchHit hit : searchResponse.getInternalResponse().hits().getHits()) {
             System.out.println(hit.toString());
         }
-
     }
 
-
+    @DisplayName("geo distance 를 이용한 검색")
+    @Test
+    void search_with_geo_distance_api2() throws Exception {
+        if (!isExistIndex(NEW_CCTV_DATA)) reindex_for_geo_point();
+        // TODO 촬영방면정보가 360도 전방면인 반경 10KM 안에 있으면서 설치목적구분이 어린이보호인 모든 CCTV 조회
+        SearchRequest searchRequest = new SearchRequest(NEW_CCTV_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        searchSourceBuilder.query(
+                boolQuery()
+                        .must(
+                                matchQuery("촬영방면정보", "360도 전방면")
+                        )
+                        .must(
+                                matchQuery("설치목적구분", "어린이보호")
+                        )
+                        .filter(
+                                geoDistanceQuery("location")
+                                        .point(37.504794, 126.739541)
+                                        .distance(5, DistanceUnit.KILOMETERS)
+                        )
+        );
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        System.out.println("검색 소요 시간 : " + searchResponse.getTook().toString());
+        System.out.println("총 " + searchResponse.getHits().getTotalHits().value + " 건이 검색되었습니다.");
+        for (SearchHit hit : searchResponse.getInternalResponse().hits().getHits()) {
+            System.out.println(hit.toString());
+        }
+    }
 
 
     private List<Map<String, Object>> extractResultList(SearchResponse searchResponse) {
@@ -935,22 +964,22 @@ public class ElasticSearchGuidBookTest {
                     builder.field("type", "geo_point");
                 }
                 builder.endObject();
-                mappingFieldWithAnalyzer(builder, "관리기관명");
-                mappingFieldWithAnalyzer(builder, "설치목적구분");
-                mappingFieldWithAnalyzer(builder, "소재지도로명주소");
-                mappingFieldWithAnalyzer(builder, "소재지지번주소");
-                mappingFieldWithAnalyzer(builder, "제공기관명");
-                mappingFieldWithAnalyzer(builder, "촬영방면정보");
+                mappingFieldWithAnalyzer(builder, "관리기관명", "text");
+                mappingFieldWithAnalyzer(builder, "설치목적구분", "text");
+                mappingFieldWithAnalyzer(builder, "소재지도로명주소", "text");
+                mappingFieldWithAnalyzer(builder, "소재지지번주소", "text");
+                mappingFieldWithAnalyzer(builder, "제공기관명", "text");
+                mappingFieldWithAnalyzer(builder, "촬영방면정보", "text");
             }
             builder.endObject();
         }
         builder.endObject();
     }
 
-    private void mappingFieldWithAnalyzer(XContentBuilder builder, String fieldName) throws IOException {
-        builder.startObject(fieldName);
+    private void mappingFieldWithAnalyzer(XContentBuilder builder, String field, String type) throws IOException {
+        builder.startObject(field);
         {
-            builder.field("type", "text");
+            builder.field("type", type);
             builder.startObject("fields");
             {
                 builder.startObject("nori");
