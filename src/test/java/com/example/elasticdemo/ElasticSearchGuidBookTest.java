@@ -148,7 +148,8 @@ public class ElasticSearchGuidBookTest {
 
         reindexRequest.setSourceIndices(CCTV_DATA)
                 .setDestIndex(NEW_CCTV_DATA)
-                .setScript(script);
+                .setScript(script)
+                .setTimeout(TimeValue.timeValueMinutes(1));
 
         BulkByScrollResponse reindexResponse = client.reindex(reindexRequest, RequestOptions.DEFAULT);
         System.out.println("reindexResponse = " + reindexResponse);
@@ -837,6 +838,40 @@ public class ElasticSearchGuidBookTest {
     }
 
 
+    @DisplayName("search API 총 복습")
+    @Test
+    void search_api_review() throws Exception {
+        //TODO 실제 검색을 위해 13 만건 정도 되는 CCTV 데이터 사용(Analyzer 적용 완료)
+        if (!isExistIndex(NEW_CCTV_DATA)) reindex_for_geo_point();
+        //TODO 검색 조건 : 관리기관명이나 소재지번주소에 "서울"이 들어가며 "시설물"과 관련된 설치구분 중 설치년월이 2014년 이후인 것을 검색
+        SearchRequest searchRequest = new SearchRequest(NEW_CCTV_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+        searchSourceBuilder.query(
+                boolQuery()
+                        .must(
+                                multiMatchQuery("서울", "관리기관명.nori", "소재지지번주소.nori")
+                        )
+                        .must(
+                                matchQuery("설치목적구분.nori", "시설물")
+                        )
+                        .filter(
+                                rangeQuery("설치년월")
+                                        .gte("2014-01")
+                        )
+        );
+
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        System.out.println("검색 소요 시간 : " + searchResponse.getTook().toString());
+        System.out.println("총 " + searchResponse.getHits().getTotalHits().value + " 건이 검색되었습니다.");
+        for (SearchHit hit : searchResponse.getInternalResponse().hits().getHits()) {
+            System.out.println(hit.toString());
+        }
+
+    }
+
+
 
 
     private List<Map<String, Object>> extractResultList(SearchResponse searchResponse) {
@@ -856,6 +891,30 @@ public class ElasticSearchGuidBookTest {
                 builder.startObject("location");
                 {
                     builder.field("type", "geo_point");
+                }
+                builder.endObject();
+                mappingFieldWithAnalyzer(builder, "관리기관명");
+                mappingFieldWithAnalyzer(builder, "설치목적구분");
+                mappingFieldWithAnalyzer(builder, "소재지도로명주소");
+                mappingFieldWithAnalyzer(builder, "소재지지번주소");
+                mappingFieldWithAnalyzer(builder, "제공기관명");
+                mappingFieldWithAnalyzer(builder, "촬영방면정보");
+            }
+            builder.endObject();
+        }
+        builder.endObject();
+    }
+
+    private void mappingFieldWithAnalyzer(XContentBuilder builder, String fieldName) throws IOException {
+        builder.startObject(fieldName);
+        {
+            builder.field("type", "text");
+            builder.startObject("fields");
+            {
+                builder.startObject("nori");
+                {
+                    builder.field("type", "text");
+                    builder.field("analyzer", "nori");
                 }
                 builder.endObject();
             }
