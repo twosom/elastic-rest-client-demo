@@ -16,6 +16,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
+import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -863,6 +864,47 @@ public class ElasticSearchGuidBookTest {
 
         searchRequest.source(searchSourceBuilder);
         SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+        System.out.println("검색 소요 시간 : " + searchResponse.getTook().toString());
+        System.out.println("총 " + searchResponse.getHits().getTotalHits().value + " 건이 검색되었습니다.");
+        for (SearchHit hit : searchResponse.getInternalResponse().hits().getHits()) {
+            System.out.println(hit.toString());
+        }
+    }
+
+    @DisplayName("geo distance 를 이용한 검색")
+    @Test
+    void search_with_geo_distance_api() throws Exception {
+        //TODO 실제 검색을 위해 13 만건 정도 되는 CCTV 데이터 사용(Analyzer 적용 완료)
+        if (!isExistIndex(NEW_CCTV_DATA)) reindex_for_geo_point();
+        SearchRequest searchRequest = new SearchRequest(NEW_CCTV_DATA);
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+
+        //TODO 현재 위치(인천)에서 반경 5KM 안에 2014년 1월 이후에 설치되었으며 보관일수가 30일 이상이며 설치목적구분이 방범인 것,
+        searchSourceBuilder.query(
+                boolQuery()
+                        .filter(
+                                geoDistanceQuery("location")
+                                        .distance(5, DistanceUnit.KILOMETERS)
+                                        //TODO 인천 좌표
+                                        .point(37.50471, 126.73972)
+                        )
+                        .filter(
+                                rangeQuery("보관일수")
+                                        .gte(30)
+                        )
+                        .filter(
+                                rangeQuery("설치년월")
+                                        .gte("2014-01")
+                        )
+                        .must(
+                                matchQuery("설치목적구분.nori", "방범")
+                        )
+        );
+
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
         System.out.println("검색 소요 시간 : " + searchResponse.getTook().toString());
         System.out.println("총 " + searchResponse.getHits().getTotalHits().value + " 건이 검색되었습니다.");
         for (SearchHit hit : searchResponse.getInternalResponse().hits().getHits()) {
