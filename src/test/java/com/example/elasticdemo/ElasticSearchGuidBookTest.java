@@ -40,6 +40,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.util.StringUtils;
 
+import java.awt.print.Pageable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
 
 import static org.elasticsearch.index.query.QueryBuilders.*;
 
-@ActiveProfiles("home")
+@ActiveProfiles("gravylab")
 @SpringBootTest
 public class ElasticSearchGuidBookTest {
 
@@ -152,7 +153,7 @@ public class ElasticSearchGuidBookTest {
         reindexRequest.setSourceIndices(CCTV_DATA)
                 .setDestIndex(NEW_CCTV_DATA)
                 .setScript(script)
-                .setTimeout(TimeValue.timeValueMinutes(1));
+                .setTimeout(TimeValue.timeValueMinutes(2));
 
         BulkByScrollResponse reindexResponse = client.reindex(reindexRequest, RequestOptions.DEFAULT);
         System.out.println("reindexResponse = " + reindexResponse);
@@ -188,6 +189,7 @@ public class ElasticSearchGuidBookTest {
     @DisplayName("from/size 를 이용한 검색")
     @Test
     void search_with_from_size() throws Exception {
+
         if (isExistIndex(TEST_DATA)) create_index_using_bulk_api2();
 
         SearchRequest searchRequest = new SearchRequest(TEST_DATA);
@@ -846,7 +848,7 @@ public class ElasticSearchGuidBookTest {
     void search_api_review() throws Exception {
         //TODO 실제 검색을 위해 13 만건 정도 되는 CCTV 데이터 사용(Analyzer 적용 완료)
         if (!isExistIndex(NEW_CCTV_DATA)) reindex_for_geo_point();
-        //TODO 검색 조건 : 관리기관명이나 소재지번주소에 "서울"이 들어가며 "시설물"과 관련된 설치구분 중 설치년월이 2014년 이후인 것을 검색
+        //TODO 검색 조건 : 관리기관명이나 소 재지번주소에 "서울"이 들어가며 "시설물"과 관련된 설치구분 중 설치년월이 2014년 이후인 것을 검색
         SearchRequest searchRequest = new SearchRequest(NEW_CCTV_DATA);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 

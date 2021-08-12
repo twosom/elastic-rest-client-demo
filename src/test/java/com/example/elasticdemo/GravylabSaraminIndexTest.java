@@ -31,6 +31,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.io.IOException;
 import java.util.*;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
 import static org.elasticsearch.index.query.QueryBuilders.boolQuery;
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
-
+@ActiveProfiles("gravylab")
 @SpringBootTest
 public class GravylabSaraminIndexTest {
 
@@ -201,7 +202,7 @@ public class GravylabSaraminIndexTest {
         //== 검색을 위한 SearchRequest 생성 ==//
         //TODO 자동 완성 검색어 목록을 어떻게 추려낼 지
         long start = new Date().getTime();
-        SearchRequest searchRequest = new SearchRequest();
+        SearchRequest searchRequest = new SearchRequest("saramin");
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(
                         QueryBuilders.matchAllQuery()

@@ -1,0 +1,761 @@
+{
+  "result": {
+    "url": "https://www.saramin.co.kr/zf_user/jobs/list/job-category?cat_bcd=1&cat_cd=102&page=1&sort=RD",
+    "list": [
+      {
+        "positionId": "saramin_40776515",
+        "source": "saramin",
+        "pageId": "40776515",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776515",
+        "company": "에이스휴먼파워(주)",
+        "subject": "[짧은근무시간/오전파트] 한신메디피아 원무사무직 채용",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "서울 서초구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776493",
+        "source": "saramin",
+        "pageId": "40776493",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776493",
+        "company": "나나뷰티그룹",
+        "subject": "[나나성형외과] 온라인마케팅 사무직 채용(신입/경력무관)",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "서울 강남구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776489",
+        "source": "saramin",
+        "pageId": "40776489",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776489",
+        "company": "재단법인 한국지식재산보호원",
+        "subject": "[한국지식재산보호원] 2021년 제17차 인력채용 공고",
+        "recruitSupportType": true,
+        "etc": [
+          "신입 · 경력",
+          "대학교(4년)↑",
+          "서울 강남구",
+          "~ 08/08(일)"
+        ],
+        "finished": "~ 08/08(일)"
+      },
+      {
+        "positionId": "saramin_40776484",
+        "source": "saramin",
+        "pageId": "40776484",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776484",
+        "company": "나나뷰티그룹",
+        "subject": "[나나성형외과] 병원마케팅 기획 및 콘텐츠  운영/관리 담당자",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "서울 강남구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776481",
+        "source": "saramin",
+        "pageId": "40776481",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776481",
+        "company": "(주)세스코",
+        "subject": "(주)세스코 서울서부지사 관리사무직(SA) 모집 (7/23~8/22)",
+        "recruitSupportType": true,
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "경기 부천시",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776479",
+        "source": "saramin",
+        "pageId": "40776479",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776479",
+        "company": "나나뷰티그룹",
+        "subject": "[나나성형외과] 병원 마케터 채용 (온라인/바이럴) 업계최고대우",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "서울 강남구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776475",
+        "source": "saramin",
+        "pageId": "40776475",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776475",
+        "company": "(주)아구스팩토리",
+        "subject": "온라인 광고 운영 담당자 채용(신입 및 경력)",
+        "etc": [
+          "신입 · 경력",
+          "학력무관",
+          "서울 영등포구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776464",
+        "source": "saramin",
+        "pageId": "40776464",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776464",
+        "company": "(주)지투지",
+        "subject": "[나나성형] 몽골 외래 통역 및 마케팅 담당자 채용",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 강남구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776459",
+        "source": "saramin",
+        "pageId": "40776459",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776459",
+        "company": "(주)수이앤씨",
+        "subject": "사무보조 (계약직,아르바이트)",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "서울 송파구",
+          "~ 08/30(월)"
+        ],
+        "finished": "~ 08/30(월)"
+      },
+      {
+        "positionId": "saramin_40776458",
+        "source": "saramin",
+        "pageId": "40776458",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776458",
+        "company": "(주)아구스팩토리",
+        "subject": "광고대행사 인턴직, 광고 AE 경력직 모집",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 영등포구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776455",
+        "source": "saramin",
+        "pageId": "40776455",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776455",
+        "company": "(주)시그널",
+        "subject": "[스타트업] 공유주방 운영·디자인(마케팅)·영업 직원 모집",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 성동구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776454",
+        "source": "saramin",
+        "pageId": "40776454",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776454",
+        "company": "에이치알포유(주)",
+        "subject": "[반도체 후공정 중견기업] IR/공시 (3년 이상)",
+        "etc": [
+          "3 ~ 14년",
+          "대학교(4년)↑",
+          "서울 금천구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776453",
+        "source": "saramin",
+        "pageId": "40776453",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776453",
+        "company": "㈜소풍인터내셔널",
+        "subject": "[온라인] CS 팀원 채용, 쇼핑몰 전화상담, 고객관리, 강동 사옥",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 강동구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776450",
+        "source": "saramin",
+        "pageId": "40776450",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776450",
+        "company": "유비스 코리아",
+        "subject": "중견게임개발사 법무 차장(팀장급)",
+        "etc": [
+          "경력 7년↑",
+          "대학교(4년)↑",
+          "서울 마포구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776447",
+        "source": "saramin",
+        "pageId": "40776447",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776447",
+        "company": "비티맥기네스번지리미티드",
+        "subject": "[CYLNDR.Seoul] 총무담당 채용",
+        "etc": [
+          "신입 · 경력",
+          "학력무관",
+          "서울 성동구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776445",
+        "source": "saramin",
+        "pageId": "40776445",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776445",
+        "company": "비아이피 포커스",
+        "subject": "바이오/제약  해외마케팅 및 수출 (생명과학분야전공 필수)",
+        "etc": [
+          "신입 · 경력",
+          "대학교(4년)↑",
+          "서울 송파구",
+          "~ 08/16(월)"
+        ],
+        "finished": "~ 08/16(월)"
+      },
+      {
+        "positionId": "saramin_40776439",
+        "source": "saramin",
+        "pageId": "40776439",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776439",
+        "company": "(주)아구스팩토리",
+        "subject": "광고대행사 광고AE 경력직, 인턴직 모집",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 영등포구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776436",
+        "source": "saramin",
+        "pageId": "40776436",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776436",
+        "company": "에이치알포유(주)",
+        "subject": "[인공지능 유망 스타트업] App 마케터 (3년 이상)",
+        "etc": [
+          "경력 3년↑",
+          "대학교(4년)↑",
+          "서울 금천구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776431",
+        "source": "saramin",
+        "pageId": "40776431",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776431",
+        "company": "(주)지투지",
+        "subject": "[나나성형외과] 태국/인도네시아 마케팅 통역 담당자 채용",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "서울 강남구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776426",
+        "source": "saramin",
+        "pageId": "40776426",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776426",
+        "company": "에이치알포유(주)",
+        "subject": "[인공지능 유망 스타트업] 퍼포먼스마케팅 (경력 3년 이상)",
+        "etc": [
+          "경력 3년↑",
+          "학력무관",
+          "서울 금천구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776406",
+        "source": "saramin",
+        "pageId": "40776406",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776406",
+        "company": "(주)이룸코리아",
+        "subject": "[온라인사업부] 쇼핑몰 MD / AMD 모집",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "서울 강동구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776405",
+        "source": "saramin",
+        "pageId": "40776405",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776405",
+        "company": "곰두랑",
+        "subject": "프레쉬아워에서 함께할 동료를 찾아요 (웹개발자, 마케터)",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "충북 충주시",
+          "~ 08/21(토)"
+        ],
+        "finished": "~ 08/21(토)"
+      },
+      {
+        "positionId": "saramin_40776404",
+        "source": "saramin",
+        "pageId": "40776404",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776404",
+        "company": "HR컨설팅(주)",
+        "subject": "상장사 연결결산 및 지주사 관리 - 과장급 이상 [그룹 지주사]",
+        "etc": [
+          "경력 5년↑",
+          "대학교(4년)↑",
+          "서울 강남구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776403",
+        "source": "saramin",
+        "pageId": "40776403",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776403",
+        "company": "(주)이룸코리아",
+        "subject": "[온라인] CS 팀원 채용, 쇼핑몰 전화상담, 고객관리, 강동 사옥",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "서울 강동구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776400",
+        "source": "saramin",
+        "pageId": "40776400",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776400",
+        "company": "아이비커리어㈜",
+        "subject": "[창원] 두산그룹 CAD업무 채용",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "경남 창원시",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776393",
+        "source": "saramin",
+        "pageId": "40776393",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776393",
+        "company": "(주)신명플러스",
+        "subject": "천안 터미널 매표 인력관리 직원 채용",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "충남 천안시 동남구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776388",
+        "source": "saramin",
+        "pageId": "40776388",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776388",
+        "company": "(주)제주블루오션",
+        "subject": "재무회계세무 직원을 채용합니다 (정규직)",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "제주 서귀포시",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40775605",
+        "source": "saramin",
+        "pageId": "40775605",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40775605",
+        "company": "템프인(주)",
+        "subject": "[강남/max연2,400만/신입가능] 유명기업 경영지원팀 사무직 채용",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "서울 강남구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776379",
+        "source": "saramin",
+        "pageId": "40776379",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776379",
+        "company": "백세요양병원",
+        "subject": "회계/급여/인사 관리 직원 모집[청년내일채움공제 가입]모집 -",
+        "etc": [
+          "1 ~ 15년",
+          "고졸↑",
+          "대전 중구",
+          "~ 07/31(토)"
+        ],
+        "finished": "~ 07/31(토)"
+      },
+      {
+        "positionId": "saramin_40776376",
+        "source": "saramin",
+        "pageId": "40776376",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776376",
+        "company": "휴마시스(주)",
+        "subject": "경영지원본부 공시담당 경력사원 모집",
+        "etc": [
+          "3 ~ 7년",
+          "대학교(4년)↑",
+          "경기 군포시",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776373",
+        "source": "saramin",
+        "pageId": "40776373",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776373",
+        "company": "에이치알포유(주)",
+        "subject": "[체외진단의료기기 전문기업] 면역진단 마케팅 및 PM (7년 이상)",
+        "etc": [
+          "7 ~ 12년",
+          "대학교(4년)↑",
+          "서울 금천구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776370",
+        "source": "saramin",
+        "pageId": "40776370",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776370",
+        "company": "에스이임파워 사회적협동조합",
+        "subject": "면목패션봉제특구 도시재생지원센터 계약직 사무국장 공개 채용",
+        "etc": [
+          "경력 5년↑",
+          "학력무관",
+          "서울 중랑구",
+          "~ 08/06(금)"
+        ],
+        "finished": "~ 08/06(금)"
+      },
+      {
+        "positionId": "saramin_40776369",
+        "source": "saramin",
+        "pageId": "40776369",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776369",
+        "company": "에이스휴먼파워(주)",
+        "subject": "[평일/월207만이상/복지좋음] BC카드 본사 사무보조 채용",
+        "etc": [
+          "경력무관",
+          "고졸↑",
+          "서울 중구",
+          "~ 08/07(토)"
+        ],
+        "finished": "~ 08/07(토)"
+      },
+      {
+        "positionId": "saramin_40776363",
+        "source": "saramin",
+        "pageId": "40776363",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776363",
+        "company": "플레저성형외과",
+        "subject": "[성형외과 마케팅] (주5일) 마케팅 신입/경력 채용",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 서초구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776358",
+        "source": "saramin",
+        "pageId": "40776358",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776358",
+        "company": "(주)모티바코리아",
+        "subject": "[모티바코리아]  RA/QA 경력사원 모집",
+        "etc": [
+          "3 ~ 7년",
+          "대학교(4년)↑",
+          "서울 강남구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776352",
+        "source": "saramin",
+        "pageId": "40776352",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776352",
+        "company": "현대엘리베이터",
+        "subject": "현대엘리베이터 조직문화 담당자 채용 모집",
+        "recruitSupportType": true,
+        "etc": [
+          "경력 3년↑",
+          "대학교(4년)↑",
+          "서울 종로구",
+          "~ 08/05(목)"
+        ],
+        "finished": "~ 08/05(목)"
+      },
+      {
+        "positionId": "saramin_40776343",
+        "source": "saramin",
+        "pageId": "40776343",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776343",
+        "company": "(주)아이오케이컴퍼니",
+        "subject": "아이오케이컴퍼니 음원사업부 각 부문별 담당자",
+        "etc": [
+          "신입 · 경력",
+          "학력무관",
+          "서울 용산구",
+          "~ 08/09(월)"
+        ],
+        "finished": "~ 08/09(월)"
+      },
+      {
+        "positionId": "saramin_40776336",
+        "source": "saramin",
+        "pageId": "40776336",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776336",
+        "company": "(주)오누이",
+        "subject": "교육회사 오누이 - 설탭 학습운영팀 CS 팀원 채용 (신입, 경력)",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 마포구",
+          "~ 07/28(수)"
+        ],
+        "finished": "~ 07/28(수)"
+      },
+      {
+        "positionId": "saramin_40776335",
+        "source": "saramin",
+        "pageId": "40776335",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776335",
+        "company": "(주)에스제이피플",
+        "subject": "에스제이피플 상품기획 경력직 채용",
+        "etc": [
+          "경력 5년↑",
+          "학력무관",
+          "서울 광진구",
+          "채용시"
+        ],
+        "finished": "채용시"
+      },
+      {
+        "positionId": "saramin_40776332",
+        "source": "saramin",
+        "pageId": "40776332",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776332",
+        "company": "(주)에클라바치",
+        "subject": "[마케팅]주얼리 브랜드 바이럴 마케팅 담당자 모집",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 강남구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776329",
+        "source": "saramin",
+        "pageId": "40776329",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776329",
+        "company": "(주)한국리서치",
+        "subject": "[한국리서치] 마케팅조사 사업부 경력직 연구원 채용",
+        "recruitSupportType": true,
+        "etc": [
+          "경력 3년↑",
+          "대학교(4년)↑",
+          "서울 강남구",
+          "~ 07/31(토)"
+        ],
+        "finished": "~ 07/31(토)"
+      },
+      {
+        "positionId": "saramin_40776326",
+        "source": "saramin",
+        "pageId": "40776326",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776326",
+        "company": "에이치알포유(주)",
+        "subject": "[체외진단의료기기 전문기업] 사업기획 (5년 이상)",
+        "etc": [
+          "5 ~ 12년",
+          "대학교(4년)↑",
+          "서울 금천구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776323",
+        "source": "saramin",
+        "pageId": "40776323",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776323",
+        "company": "퍼스트교육",
+        "subject": "2021년 상반기 인천,부천 마케팅,웹디자인,사무보조 직원 채용",
+        "etc": [
+          "신입 · 경력",
+          "학력무관",
+          "인천 부평구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      },
+      {
+        "positionId": "saramin_40776317",
+        "source": "saramin",
+        "pageId": "40776317",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776317",
+        "company": "제이케이서치 주식회사",
+        "subject": "[유명 의약품 제조 중견기업] BD (비즈니스 개발) 팀장 채용",
+        "etc": [
+          "5 ~ 15년",
+          "대학교(4년)↑",
+          "서울 금천구",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776305",
+        "source": "saramin",
+        "pageId": "40776305",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776305",
+        "company": "에이치알포유(주)",
+        "subject": "[체외진단의료기기] 혈당스트립 개발/개선 (3년 이상)",
+        "etc": [
+          "3 ~ 10년",
+          "대학교(4년)↑",
+          "서울 금천구",
+          "~ 07/30(금)"
+        ],
+        "finished": "~ 07/30(금)"
+      },
+      {
+        "positionId": "saramin_40776289",
+        "source": "saramin",
+        "pageId": "40776289",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776289",
+        "company": "(주)숲풀림식품",
+        "subject": "재무팀 모집",
+        "etc": [
+          "경력 5년↑",
+          "대학(2,3년)↑",
+          "경기 양주시",
+          "~ 08/22(일)"
+        ],
+        "finished": "~ 08/22(일)"
+      },
+      {
+        "positionId": "saramin_40776285",
+        "source": "saramin",
+        "pageId": "40776285",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776285",
+        "company": "유원커리어센터",
+        "subject": "[분양사무소] 엑셀 자료입력 사무직 채용",
+        "etc": [
+          "경력무관",
+          "학력무관",
+          "서울 강남구",
+          "~ 07/28(수)"
+        ],
+        "finished": "~ 07/28(수)"
+      },
+      {
+        "positionId": "saramin_40776280",
+        "source": "saramin",
+        "pageId": "40776280",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776280",
+        "company": "(주)드림아이디어소프트",
+        "subject": "[대구] 시스템 사업부 기획/사무보조 채용",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "대구 동구",
+          "~ 07/31(토)"
+        ],
+        "finished": "~ 07/31(토)"
+      },
+      {
+        "positionId": "saramin_40776271",
+        "source": "saramin",
+        "pageId": "40776271",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776271",
+        "company": "굿커리어",
+        "subject": "2021 하반기 세무, 회계, 재무 경력사원 채용",
+        "etc": [
+          "경력 10년↑",
+          "대학교(4년)↑",
+          "서울 강남구",
+          "~ 08/07(토)"
+        ],
+        "finished": "~ 08/07(토)"
+      },
+      {
+        "positionId": "saramin_40776268",
+        "source": "saramin",
+        "pageId": "40776268",
+        "pageUrl": "https://www.saramin.co.kr/zf_user/jobs/relay/pop-view?rec_idx=40776268",
+        "company": "에이스티앤디",
+        "subject": "2021년 기획/마케팅 신입채용",
+        "etc": [
+          "경력무관",
+          "대학(2,3년)↑",
+          "경기 고양시 일산동구",
+          "~ 09/21(화)"
+        ],
+        "finished": "~ 09/21(화)"
+      }
+    ]
+  }
+}

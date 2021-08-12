@@ -14,15 +14,13 @@ import java.util.List;
 @Builder
 public class ElasticRecruitModel {
     private String positionId;
-
-    @Builder.Default
-    private List<String> etc = new ArrayList<>();
-    private String subject;
-    private String pageUrl;
-    private String companhy;
-    private String finished;
     private String source;
     private String pageId;
-    private boolean recruitSupportType;
+    private String pageUrl;
+    private String company;
+    private String subject;
+    @Builder.Default
+    private List<String> etc = new ArrayList<>();
+    private String finished;
 
 }
